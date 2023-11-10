@@ -16,10 +16,58 @@
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
 
   <title>テスト</title>
+
+  <script>
+
+  AFRAME.registerComponent('rotate-around-circular-path', {
+      schema: {
+        radius: { type: 'number', default: 1 }, // 円の半径
+        speed: { type: 'number', default: 1 },  // 移動の速さ
+      },
+
+      init: function () {
+        this.center = { x: 0, y: this.data.radius, z: 0 }; // 中心の座標
+        this.angle = 0; // 初期角度
+      },
+
+      tick: function (time, timeDelta) {
+        console.log("-------tick-------");
+
+        this.angle += this.data.speed * (timeDelta / 1000); // 時間に基づいて角度を更新
+
+        // 新しい位置を計算
+        // var x = this.center.x + this.data.radius * Math.cos(this.angle);
+        // var y = this.center.y;
+        // var z = this.center.z + this.data.radius * Math.sin(this.angle);
+        var x = this.center.x + this.data.radius * Math.cos(this.angle);
+        var y = this.center.y + this.data.radius * Math.sin(this.angle);
+        var z = this.center.z;
+
+        // エンティティの位置を更新
+        this.el.setAttribute('position', { x: x, y: y, z: z });
+      }
+    });
+
+    // window.onload = function(){
+    //   console.log("-------window.onload-------");
+
+    //   if (document.getElementById('tomashina'))
+    //     console.log("-------getElementById -> ok-------");
+
+    //   // 実行したい処理..
+    //   document.getElementById('tomashina').setAttribute('rotate-around-circular-path', {
+    //     radius: 5, // 任意の円の半径
+    //     speed: 1    // 任意の移動速度
+    //   });      
+    // }
+
+    console.log("-------script--end-------");
+
+  </script>
 </head>
 
 <body style="margin: 0; overflow: hidden">
-  AR Test<br>
+    AR Test<br>
 
   <!-- A-FrameにAR.jsを紐づけ、VRボタン非表示、深度バッファ追加 -->
   <!-- このとき任意でvr-mode-ui="enabled: false;"も追加することで、ブラウザ起動時に右下に表示されるVRのボタンを非表示にできます。 -->
@@ -33,16 +81,25 @@
       <a-asset-item id="okazaemon" src="./assets/okazaemon_amin_1027.glb"></a-asset-item>
       <a-asset-item id="tomashina" src="./assets/tomashina_anim_1027.glb"></a-asset-item>
       <a-asset-item id="tostakun" src="./assets/tostakun_anim_1027.glb"></a-asset-item>
+
+      <audio id="audio_ena" src="./assets/ena.mp3" preload="auto"></audio>
+      <audio id="audio_kenpachikun" src="./assets/kenpachikun.mp3" preload="auto"></audio>
+      <audio id="audio_nonsuke" src="./assets/nonsuke.mp3" preload="auto"></audio>
+      <audio id="audio_okazaemon" src="./assets/okazaemon.mp3" preload="auto"></audio>
+      <audio id="audio_tomashina" src="./assets/tomashina.mp3" preload="auto"></audio>
+      <audio id="audio_tostakun" src="./assets/tostakun.mp3" preload="auto"></audio>
     </a-assets>
 
     <!-- マーカーの.pattファイルを読み込む  -->
     <a-marker type="pattern" url="./assets/pattern-ena.patt">
       <!-- 3Dモデルを呼び出す -->
       <a-entity
-          gltf-model="#ena"
-          scale="0.5 0.5 0.5" rotation="-90 0 0"
-          animation-mixer="clip:wave; timeScale:1"
-          >
+        gltf-model="#ena"
+        scale="0.5 0.5 0.5" rotation="-90 0 0"
+        animation-mixer="clip:wave; timeScale:1"
+        rotate-around-circular-path
+        sound="src: #audio_ena"
+        >
       </a-entity>
     </a-marker>
 
@@ -52,6 +109,7 @@
           scale="0.5 0.5 0.5" rotation="-90 0 0"
           animation-mixer="clip:walk; timeScale:4"
           animation__1="property: position; from: 0 0 0; to: 0 5 0; loop: true; dur: 3000"
+          sound="src: #audio_kenpachikun"
           >
       </a-entity>
     </a-marker>
@@ -61,6 +119,7 @@
           gltf-model="#nonsuke"
           scale="0.5 0.5 0.5" rotation="-90 0 0"
           animation-mixer="clip:wave; timeScale:1"
+          rotate-around-circular-path
           >
       </a-entity>
     </a-marker>
@@ -70,6 +129,7 @@
           gltf-model="#okazaemon"
           scale="0.5 0.5 0.5" rotation="-90 0 0"
           animation-mixer="clip:walk; timeScale:1"
+          rotate-around-circular-path
           >
       </a-entity>
     </a-marker>
@@ -79,6 +139,7 @@
           gltf-model="#tomashina"
           scale="0.5 0.5 0.5" rotation="-90 0 0"
           animation-mixer="clip:wave; timeScale:1"
+          rotate-around-circular-path
           >
       </a-entity>
     </a-marker>
@@ -88,8 +149,13 @@
           gltf-model="#tostakun"
           scale="0.5 0.5 0.5" rotation="-90 0 0"
           animation-mixer="clip:wave; timeScale:1"
+          rotate-around-circular-path
           >
       </a-entity>
+    <!-- test -->
+		<!-- <a-sound id="my_sound01" src="#audio_nonsuke" position="0 1.2 -3" autoplay="false" loop="true"></a-sound> -->
+    <!-- test -->
+
     </a-marker>
 
     <!-- カメラを追加 -->
