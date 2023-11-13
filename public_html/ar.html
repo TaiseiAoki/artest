@@ -19,34 +19,155 @@
 
   <script>
 
-  AFRAME.registerComponent('rotate-around-circular-path', {
+
+    AFRAME.registerComponent('marker', {
       schema: {
-        radius: { type: 'number', default: 1 }, // 円の半径
-        speed: { type: 'number', default: 1 },  // 移動の速さ
+        baseTime: { type: 'number', default: 0},
       },
 
       init: function () {
-        this.center = { x: 0, y: this.data.radius, z: 0 }; // 中心の座標
-        this.angle = 0; // 初期角度
+        const narker = this;
+        // const marker = this.el;
+
+
+        // console.log("-------init baseTime ? " + this.el.getAttribute('marker').baseTime.toString());
+        
+
+        this.el.addEventListener('markerFound', function () {
+          console.log("-------markerFound-------");
+
+          narker.data.baseTime = Date.now();
+          console.log("-------baseTime------- " + narker.data.baseTime.toString());
+
+          // if (audio) {
+          //   audio.currentTime = 0;
+          //   audio.play();
+          // }
+        });
+
+        this.el.addEventListener('markerLost', function () {
+          console.log("-------markerLost-------");
+          // audio && audio.pause();
+
+          narker.data.baseTime = 0;
+        });
       },
-
-      tick: function (time, timeDelta) {
-        console.log("-------tick-------");
-
-        this.angle += this.data.speed * (timeDelta / 1000); // 時間に基づいて角度を更新
-
-        // 新しい位置を計算
-        // var x = this.center.x + this.data.radius * Math.cos(this.angle);
-        // var y = this.center.y;
-        // var z = this.center.z + this.data.radius * Math.sin(this.angle);
-        var x = this.center.x + this.data.radius * Math.cos(this.angle);
-        var y = this.center.y + this.data.radius * Math.sin(this.angle);
-        var z = this.center.z;
-
-        // エンティティの位置を更新
-        this.el.setAttribute('position', { x: x, y: y, z: z });
-      }
     });
+
+  // AFRAME.registerComponent('my_params', {
+  //   schema: {
+  //     baseTime: { type: 'number', default: 0 },
+  //   },
+  // });
+
+  AFRAME.registerComponent('rotate-around-circular-path', {
+    schema: {
+      radius: { type: 'number', default: 1 }, // 円の半径
+      speed: { type: 'number', default: 1 },  // 移動の速さ
+      // baseTime: { type: 'number', default: 0},
+      start: { type: 'number', default: 0 },  // start flag
+    },
+
+    init: function () {
+      this.center = { x: 0, y: this.data.radius, z: 0 }; // 中心の座標
+      this.angle = (-2*Math.PI)/4; // 初期角度
+      // this.start = false;
+    },
+
+    tick: function (time, timeDelta) {
+      // console.log("-------tick-------");
+
+      // var t1 = new Date().getTime();      
+      // console.log("t1        " + t1.toString());
+      // console.log("timeDelta " + timeDelta.toString());
+      // if (this.time0)
+      //   console.log("time0     " + this.time0.toString());
+
+
+      if (this.data.start > 0) {
+        console.log("-------tick------- start " + this.data.start.toString());
+      }
+
+      var x = 0;
+      var y = 0;
+      var z = 0;
+      var flag = false;
+
+        // console.dir(this);
+        //if (this.el)        console.dir(this.el);
+        //if (this.el.parentElement)  console.dir(this.el.parentElement);
+        // if (this.el.parentElement.getAttribute('marker'))  console.dir(this.el.parentElement.getAttribute('marker'));
+
+      // if (this.data.start>0 &&
+      //     this.el.parentElement.getAttribute('marker') && 
+      //     this.el.parentElement.getAttribute('marker').baseTime) {
+        if (this.el.parentElement.getAttribute('marker') && 
+            this.el.parentElement.getAttribute('marker').baseTime) {
+
+        var baseTime = this.el.parentElement.getAttribute('marker').baseTime;
+        if (baseTime > 0) {
+          // console.dir(this.el.parentElement.getAttribute('marker').baseTime);           
+
+          // var dt = Date.now() - this.el.parentElement.getAttribute('marker').baseTime;
+
+          // console.log("dt     " + dt.toString());
+
+          // dt %= 60;
+          // this.angle += this.data.speed * dt; // 時間に基づいて角度を更新
+          if (this.data.start > 0) {
+            this.angle += this.data.speed * (timeDelta / 1000); // 時間に基づいて角度を更新
+          }
+
+          // 新しい位置を計算
+          // var x = this.center.x + this.data.radius * Math.cos(this.angle);
+          // var y = this.center.y + this.data.radius * Math.sin(this.angle);
+          // var z = this.center.z;
+
+          // x = this.center.x + this.data.radius * Math.cos(this.angle);
+          // y = this.center.y + this.data.radius * Math.sin(this.angle);
+          // z = this.center.z;
+
+          // エンティティの位置を更新
+          //this.el.setAttribute('position', { x: x, y: y, z: z });
+          flag = true;
+        }
+        // else {
+        //   this.angle = (-2*Math.PI)/4;
+        //   this.data.start = 0;
+        //   // this.el.position.x = this.el.position.y = this.el.position.z = 0;
+        //   //this.el.setAttribute('position', {x:0, y:0, z:0});
+
+        //   // x = this.center.x + this.data.radius * Math.cos(this.angle);
+        //   // y = this.center.y + this.data.radius * Math.sin(this.angle);
+        //   // z = this.center.z;
+
+        //   this.el.setAttribute('animation-mixer', 'clip:wave');
+        // }
+      }
+      // else {
+      //   this.angle = (-2*Math.PI)/4;
+      //   this.data.start = 0;
+      //   //this.el.position.x = this.el.position.y = this.el.position.z = 0;
+      //   //this.el.setAttribute('position', {x:0, y:0, z:0});
+
+      //   // x = this.center.x + this.data.radius * Math.cos(this.angle);
+      //   //   y = this.center.y + this.data.radius * Math.sin(this.angle);
+      //   //   z = this.center.z;
+
+      //   this.el.setAttribute('animation-mixer', 'clip:wave');
+      // }
+      if (!flag) {
+        this.angle = (-2*Math.PI)/4;
+        // this.el.setAttribute('animation-mixer', 'clip:wave');
+        this.data.start = 0;
+      }
+
+      x = this.center.x + this.data.radius * Math.cos(this.angle);
+      y = this.center.y + this.data.radius * Math.sin(this.angle);
+      z = this.center.z;
+      this.el.setAttribute('position', { x: x, y: y, z: z });      
+    }
+  });
 
     // window.onload = function(){
     //   console.log("-------window.onload-------");
@@ -61,7 +182,40 @@
     //   });      
     // }
 
-    console.log("-------script--end-------");
+  AFRAME.registerComponent('click-change', {
+    init: function () {
+      this.el.addEventListener('click', function (event) {
+        //クリック時の処理
+        console.log("-------click!!-------");
+        console.dir(this.parentEl);
+        // this.parentEl.start = true;
+
+        var attr = this.parentEl.getAttribute('rotate-around-circular-path');
+        console.dir(attr);
+        if (attr) {
+          attr.start = !attr.start;
+          this.parentEl.setAttribute('animation-mixer', (attr.start ? 'clip:walk' : 'clip:wave'));
+
+          // attr.start = true;
+          // if (attr.start) {
+          //   attr.start = true;
+          // } else {
+          //   attr.start = true;
+          // }
+        }
+
+        // attr = this.parentEl.getAttribute('animation-mixer');
+        // this.parentEl.setAttribute('animation-mixer', 'clip:walk');
+
+        // this.parentEl.setAttribute('rotate-around-circular-path', {start: true});
+        // this.parentEl.setAttribute('rotate-around-circular-path', {radius: 1, speed: 1});
+        // this.parentEl.setAttribute('time0', 1);
+
+      });
+    }
+  });   
+
+  console.log("-------script--end-------");
 
   </script>
 </head>
@@ -90,8 +244,11 @@
       <audio id="audio_tostakun" src="./assets/tostakun.mp3" preload="auto"></audio>
     </a-assets>
 
+    <!-- マウスカーソル -->
+    <a-entity id="mouseCursor" cursor="rayOrigin: mouse" raycaster="objects: .raycastable"></a-entity>
+
     <!-- マーカーの.pattファイルを読み込む  -->
-    <a-marker type="pattern" url="./assets/pattern-ena.patt">
+    <a-marker marker type="pattern" url="./assets/pattern-ena.patt">
       <!-- 3Dモデルを呼び出す -->
       <a-entity
         gltf-model="#ena"
@@ -100,10 +257,24 @@
         rotate-around-circular-path
         sound="src: #audio_ena"
         >
+        <a-entity
+        scale="2 8 2"
+        position="0 2 0"
+        click-change>
+        <a-entity
+          class="raycastable"
+          geometry="primitive:cylinder"
+          material="color:red; opacity: 0.5"
+          scale="1 1 1"
+          position="0 0 0"
+          visible="false"
+          >
+        </a-entity>
+      </a-entity>          
       </a-entity>
     </a-marker>
 
-    <a-marker type="pattern" url="./assets/pattern-kenpachikun.patt">
+    <!-- <a-marker type="pattern" url="./assets/pattern-kenpachikun.patt">
       <a-entity
           gltf-model="#kenpachikun"
           scale="0.5 0.5 0.5" rotation="-90 0 0"
@@ -112,39 +283,125 @@
           sound="src: #audio_kenpachikun"
           >
       </a-entity>
+    </a-marker> -->
+    <a-marker marker type="pattern" url="./assets/pattern-kenpachikun.patt">
+      <a-entity
+          gltf-model="#kenpachikun"
+          scale="0.5 0.5 0.5" rotation="-90 0 0"
+          animation-mixer="clip:wave; timeScale:1"
+          rotate-around-circular-path
+          sound="src: #audio_kenpachikun"
+          >
+          <a-entity
+            scale="2 8 2"
+            position="0 2 0"
+            click-change>
+            <a-entity
+              class="raycastable"
+              geometry="primitive:cylinder"
+              material="color:red; opacity: 0.5"
+              scale="1 1 1"
+              position="0 0 0"
+              visible="false"
+              >
+            </a-entity>
+          </a-entity>          
+      </a-entity>
     </a-marker>
 
-    <a-marker type="pattern" url="./assets/pattern-nonsuke.patt">
+    <a-marker marker type="pattern" url="./assets/pattern-nonsuke.patt">
       <a-entity
           gltf-model="#nonsuke"
           scale="0.5 0.5 0.5" rotation="-90 0 0"
           animation-mixer="clip:wave; timeScale:1"
           rotate-around-circular-path
           >
+          <a-entity
+            scale="2 8 2"
+            position="0 2 0"
+            click-change>
+            <a-entity
+              class="raycastable"
+              geometry="primitive:cylinder"
+              material="color:red; opacity: 0.5"
+              scale="1 1 1"
+              position="0 0 0"
+              visible="false"
+              >
+            </a-entity>
+          </a-entity>          
       </a-entity>
     </a-marker>
 
-    <a-marker type="pattern" url="./assets/pattern-okazaemon.patt">
+    <a-marker marker type="pattern" url="./assets/pattern-okazaemon.patt">
       <a-entity
           gltf-model="#okazaemon"
           scale="0.5 0.5 0.5" rotation="-90 0 0"
-          animation-mixer="clip:walk; timeScale:1"
+          animation-mixer="clip:wave; timeScale:1"
           rotate-around-circular-path
           >
+          <a-entity
+            scale="2 8 2"
+            position="0 2 0"
+            click-change>
+            <a-entity
+              class="raycastable"
+              geometry="primitive:cylinder"
+              material="color:red; opacity: 0.5"
+              scale="1 1 1"
+              position="0 0 0"
+              visible="false"
+              >
+            </a-entity>
+          </a-entity>          
       </a-entity>
     </a-marker>
 
-    <a-marker type="pattern" url="./assets/pattern-tomashina.patt">
+    <a-marker marker type="pattern" url="./assets/pattern-tomashina.patt">
       <a-entity
           gltf-model="#tomashina"
           scale="0.5 0.5 0.5" rotation="-90 0 0"
           animation-mixer="clip:wave; timeScale:1"
           rotate-around-circular-path
           >
+          <a-entity
+            scale="2 8 2"
+            position="0 2 0"
+            click-change>
+            <a-entity
+              class="raycastable"
+              geometry="primitive:cylinder"
+              material="color:red; opacity: 0.5"
+              scale="1 1 1"
+              position="0 0 0"
+              visible="false"
+              >
+            </a-entity>
+          </a-entity>          
       </a-entity>
     </a-marker>
+    <!-- <a-marker type="pattern" url="./assets/pattern-tomashina.patt">
+      <a-entity
+          gltf-model="#tomashina"
+          scale="0.5 0.5 0.5" rotation="-90 0 0"
+          animation-mixer="clip:wave; timeScale:1"
+          my_params
+          >
+          <a-entity position="0 0 0" click-change>
+            <a-entity
+              class="raycastable"
+              geometry="primitive:cylinder"
+              material="color:red; opacity: 0.5"
+              scale="1 2 1"
+              position="0 0.5 0"
+              visible="true"
+              >
+            </a-entity>
+          </a-entity>          
+      </a-entity>
+    </a-marker> -->
 
-    <a-marker type="pattern" url="./assets/pattern-tostakun.patt">
+    <!-- <a-marker type="pattern" url="./assets/pattern-tostakun.patt">
       <a-entity
           gltf-model="#tostakun"
           scale="0.5 0.5 0.5" rotation="-90 0 0"
@@ -152,11 +409,38 @@
           rotate-around-circular-path
           >
       </a-entity>
+    </a-marker> -->
+    <a-marker marker type="pattern" url="./assets/pattern-tostakun.patt">
+      <a-entity
+          gltf-model="#tostakun"
+          scale="0.5 0.5 0.5" rotation="-90 0 0"
+          animation-mixer="clip:wave; timeScale:1"
+          rotate-around-circular-path
+          >
+          <a-entity
+            scale="2 8 2"
+            position="0 2 0"
+            click-change>
+            <a-entity
+              class="raycastable"
+              geometry="primitive:cylinder"
+              material="color:red; opacity: 0.5"
+              scale="1 1 1"
+              position="0 0 0"
+              visible="false"
+              >
+            </a-entity>
+          </a-entity>          
+      </a-entity>
+    </a-marker>
+
+
+      <!-- raycaster="objects: .clickable" -->
+      <!-- rotate-around-circular-path -->
+
     <!-- test -->
 		<!-- <a-sound id="my_sound01" src="#audio_nonsuke" position="0 1.2 -3" autoplay="false" loop="true"></a-sound> -->
     <!-- test -->
-
-    </a-marker>
 
     <!-- カメラを追加 -->
     <a-entity camera></a-entity>
