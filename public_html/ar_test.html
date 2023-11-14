@@ -247,11 +247,13 @@
 </head>
 
 <body style="margin: 0; overflow: hidden">
-    <img src="./assets/logo.png" style="width: 15%; margin:5%; opacity:50%;"></img>
+    <!-- <img src="./assets/logo.png" style="width: 15%; margin:5%; opacity:50%;"></img> -->
 
   <!-- A-FrameにAR.jsを紐づけ、VRボタン非表示、深度バッファ追加 -->
   <!-- このとき任意でvr-mode-ui="enabled: false;"も追加することで、ブラウザ起動時に右下に表示されるVRのボタンを非表示にできます。 -->
   <!-- また、renderer="logarithmicDepthBuffer: true;"も追加して、対数深度バッファを設定します。深度バッファを設定しないと、3Dモデルの表示にノイズが走ったり、チカチカ明滅したりすることがあります。 -->
+  <!-- <a-scene embedded arjs vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;">
+    <a-scene embedded arjs> -->
   <a-scene embedded arjs vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;">
     <!-- 3Dモデルを読み込む -->
     <a-assets>
@@ -272,209 +274,20 @@
 
 
     <!-- マウスカーソル -->
-    <a-entity id="mouseCursor" cursor="rayOrigin: mouse" raycaster="objects: .raycastable"></a-entity>
+    <!-- <a-entity id="mouseCursor" cursor="rayOrigin: mouse" raycaster="objects: .raycastable"></a-entity> -->
 
-    <!-- マーカーの.pattファイルを読み込む  -->
-    <a-marker marker type="pattern" url="./assets/pattern-ena.patt">
-      <!-- 3Dモデルを呼び出す -->
-      <a-entity
-        gltf-model="#ena"
-        scale="0.5 0.5 0.5" rotation="-90 0 0"
-        animation-mixer="clip:wave; timeScale:1"
-        rotate-around-circular-path
-        sound="src: #audio_ena; autoplay: false"
-        >
-        <a-entity
-        scale="2 8 2"
-        position="0 2 0"
-        click-change>
-        <a-entity
-          class="raycastable"
-          geometry="primitive:cylinder"
-          material="color:red; opacity: 0.5"
-          scale="1 1 1"
-          position="0 0 0"
-          visible="false"
-          >
-        </a-entity>
-      </a-entity>          
-      </a-entity>
-    </a-marker>
-
-    <!-- <a-marker type="pattern" url="./assets/pattern-kenpachikun.patt">
-      <a-entity
-          gltf-model="#kenpachikun"
-          scale="0.5 0.5 0.5" rotation="-90 0 0"
-          animation-mixer="clip:walk; timeScale:4"
-          animation__1="property: position; from: 0 0 0; to: 0 5 0; loop: true; dur: 3000"
-          sound="src: #audio_kenpachikun"
-          >
-      </a-entity>
-    </a-marker> -->
-    <a-marker marker type="pattern" url="./assets/pattern-kenpachikun.patt">
-      <a-entity
-          gltf-model="#kenpachikun"
-          scale="0.5 0.5 0.5" rotation="-90 0 0"
-          animation-mixer="clip:wave; timeScale:1"
-          rotate-around-circular-path
-          sound="src: #audio_kenpachikun; autoplay: false"
-          >
-          <a-entity
-            scale="2 8 2"
-            position="0 2 0"
-            click-change>
-            <a-entity
-              class="raycastable"
-              geometry="primitive:cylinder"
-              material="color:red; opacity: 0.5"
-              scale="1 1 1"
-              position="0 0 0"
-              visible="false"
-              >
-            </a-entity>
-          </a-entity>          
-      </a-entity>
-    </a-marker>
-
-    <a-marker marker type="pattern" url="./assets/pattern-nonsuke.patt">
-      <a-entity
-          gltf-model="#nonsuke"
-          scale="0.5 0.5 0.5" rotation="-90 0 0"
-          animation-mixer="clip:wave; timeScale:1"
-          rotate-around-circular-path
-          sound="src: #audio_nonsuke; autoplay: false"
-          >
-          <a-entity
-            scale="2 8 2"
-            position="0 2 0"
-            click-change>
-            <a-entity
-              class="raycastable"
-              geometry="primitive:cylinder"
-              material="color:red; opacity: 0.5"
-              scale="1 1 1"
-              position="0 0 0"
-              visible="false"
-              >
-            </a-entity>
-          </a-entity>          
-      </a-entity>
-    </a-marker>
-
-    <a-marker marker type="pattern" url="./assets/pattern-okazaemon.patt">
-      <a-entity
-          gltf-model="#okazaemon"
-          scale="0.5 0.5 0.5" rotation="-90 0 0"
-          animation-mixer="clip:wave; timeScale:1"
-          rotate-around-circular-path
-          sound="src: #audio_okazaemon; autoplay: false"
-          >
-          <a-entity
-            scale="2 8 2"
-            position="0 2 0"
-            click-change>
-            <a-entity
-              class="raycastable"
-              geometry="primitive:cylinder"
-              material="color:red; opacity: 0.5"
-              scale="1 1 1"
-              position="0 0 0"
-              visible="false"
-              >
-            </a-entity>
-          </a-entity>          
-      </a-entity>
-    </a-marker>
-
-    <a-marker marker type="pattern" url="./assets/pattern-tomashina.patt">
-      <a-entity
-          gltf-model="#tomashina"
-          scale="0.5 0.5 0.5" rotation="-90 0 0"
-          animation-mixer="clip:wave; timeScale:1"
-          rotate-around-circular-path
-          sound="src: #audio_tomashina; autoplay: false"
-          >
-          <a-entity
-            scale="2 8 2"
-            position="0 2 0"
-            click-change>
-            <a-entity
-              class="raycastable"
-              geometry="primitive:cylinder"
-              material="color:red; opacity: 0.5"
-              scale="1 1 1"
-              position="0 0 0"
-              visible="false"
-              >
-            </a-entity>
-          </a-entity>          
-      </a-entity>
-    </a-marker>
-    <!-- <a-marker type="pattern" url="./assets/pattern-tomashina.patt">
-      <a-entity
-          gltf-model="#tomashina"
-          scale="0.5 0.5 0.5" rotation="-90 0 0"
-          animation-mixer="clip:wave; timeScale:1"
-          my_params
-          >
-          <a-entity position="0 0 0" click-change>
-            <a-entity
-              class="raycastable"
-              geometry="primitive:cylinder"
-              material="color:red; opacity: 0.5"
-              scale="1 2 1"
-              position="0 0.5 0"
-              visible="true"
-              >
-            </a-entity>
-          </a-entity>          
-      </a-entity>
-    </a-marker> -->
-
-    <!-- <a-marker type="pattern" url="./assets/pattern-tostakun.patt">
-      <a-entity
-          gltf-model="#tostakun"
-          scale="0.5 0.5 0.5" rotation="-90 0 0"
-          animation-mixer="clip:wave; timeScale:1"
-          rotate-around-circular-path
-          >
-      </a-entity>
-    </a-marker> -->
-    <a-marker marker type="pattern" url="./assets/pattern-tostakun.patt">
-      <a-entity
-          gltf-model="#tostakun"
-          scale="0.5 0.5 0.5" rotation="-90 0 0"
-          animation-mixer="clip:wave; timeScale:1"
-          rotate-around-circular-path
-          sound="src: #audio_tostakun; autoplay: false"
-          >
-          <a-entity
-            scale="2 8 2"
-            position="0 2 0"
-            click-change>
-            <a-entity
-              class="raycastable"
-              geometry="primitive:cylinder"
-              material="color:red; opacity: 0.5"
-              scale="1 1 1"
-              position="0 0 0"
-              visible="false"
-              >
-            </a-entity>
-          </a-entity>          
-      </a-entity>
-    </a-marker>
-
-
-      <!-- raycaster="objects: .clickable" -->
-      <!-- rotate-around-circular-path -->
-
-    <!-- test -->
-		<!-- <a-sound id="my_sound01" src="#audio_nonsuke" position="0 1.2 -3" autoplay="false" loop="true"></a-sound> -->
-    <!-- test -->
+    <a-entity
+      gltf-model="#ena"
+      position="5 -5 -17"
+      scale="0.5 0.5 0.5"
+      rotation="0 0 0"
+      animation-mixer="clip:wave; timeScale:1"
+      sound="src: #audio_ena; autoplay: false"
+      >
+    </a-entity>
 
     <!-- カメラを追加 -->
-    <a-entity camera></a-entity>
+    <!-- <a-entity camera></a-entity> -->
     
   </a-scene>
 
