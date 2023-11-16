@@ -3,20 +3,163 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- A-Frame -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densityDpi=device-dpi" />
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-
-  <!-- AR.js -->
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-
-  <!-- for animation -->
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
 
-  <title>テスト</title>
+  <title>FORUM8 Rally JAPAN 2023 AR</title>
 
   <script>
+
+    const positions = [
+        {x:-0.5, y:0, z:-7},
+        {x:0.5, y:0, z:-7},
+        {x:-1.5, y:0, z:-7},
+        {x:1.5, y:0, z:-7},
+        {x:-2.5, y:0, z:-7},
+        {x:2.5, y:0, z:-7},
+    ];
+
+    const targetPositions = [
+        {x:0, y:0, z:-2},
+        {x:0, y:0, z:-2},
+        {x:0, y:0, z:-2},
+        {x:0, y:0, z:-2},
+        {x:0, y:0, z:-2},
+        {x:0, y:0, z:-2},
+    ];
+
+    let actionStartTime = 0;
+
+    // CharacterData
+    class CharacterData {
+      name = "";
+      visible = false;
+
+      getElement() {
+        return document.getElementById("id_" + this.name);
+      }
+
+      // clip:walk wave t-pose idle
+      setAnimation(clip) {
+        const el = this.getElement();
+        if (el) {
+            var attr = el.getAttribute('animation-mixer');
+            if (attr) {
+              if (attr.clip && attr.clip==clip) {
+                return;
+              }
+            }
+            el.setAttribute('animation-mixer', 'clip:'+clip);
+        }
+      }
+
+      // ランダムに音声を鳴らす
+      playSound() {
+        const el = this.getElement();
+        if (el) {
+          const n = Math.floor(Math.random()*5)+1;
+          el.setAttribute('sound', 'src: #audio_' + this.name + n);
+          el.components.sound.playSound();
+        }
+      }
+    }
+
+    // CharacterManager
+    class CharacterManager {
+      characterDataList = [];
+      currentName = "";
+
+      constructor() {
+        for (let i=0;i<6;i++) {
+          var data = new CharacterData();
+          switch (i) {
+            case 0:
+              data.name = "ena";
+              break;
+            case 1:
+              data.name = "kenpachikun";
+              break;
+            case 2:
+              data.name = "nonsuke";
+              break;
+            case 3:
+              data.name = "okazaemon";
+              break;
+            case 4:
+              data.name = "tomashina";
+              break;
+            case 5:
+              data.name = "tostakun";
+              break;
+          }
+          this.characterDataList.push(data);
+        }
+      }
+
+      getCurrentName() {
+        return this.currentName;
+      }
+
+      setCurrentName(name) {
+        this.currentName = name;
+      }
+
+      isCurrentName(name) {
+        if (name && this.getCurrentName() && name == this.getCurrentName())
+          return true;
+        return false;
+      }
+
+      get(index) {
+        if (0<=index && index<this.characterDataList.length)
+          return this.characterDataList[index];
+        return null;
+      }
+
+      getByName(name) {
+        return this.get(this.search(name));
+      }
+
+      // id_****
+      getByID(id) {
+        if (id) {
+          return this.getByName(id.slice(3));
+        }
+        return null;
+      }
+
+      search(name) {
+        if (name) {
+          for(let i=0;i<this.length();i++) {
+            const data = this.get(i);
+            if (data && data.name) {
+              if (data.name == name)
+                return i;
+            }
+          }
+        }
+        return -1;
+      }
+
+      length() {
+        return this.characterDataList.length;
+      }
+
+      getVisibleCount() {
+        let r = 0;
+        for(let i=0;i<this.length();i++) {
+          const data = this.get(i);
+          if (data && data.visible) {
+            r++;
+          }
+        }
+        return r;
+      }
+    }
+
+    const characterManager = new CharacterManager();
 
     function getParam(key) {
       const url = location.search;
@@ -45,366 +188,273 @@
       return {x:x, y:y, z:z,};
     }
 
-    function showCharacters() {
-      console.log("-------showCharacters-------");
+    // 無ければ追加、カレント変更
+    function addCharacter(name, changeCurrentFlag) {
+      console.log("addCharacter( " + name + " , " + changeCurrentFlag + " )");
 
-      const positions = [
-        {x:-0.5, y:0, z:-7},
-        {x:0.5, y:0, z:-7},
-        {x:-1.5, y:0, z:-7},
-        {x:1.5, y:0, z:-7},
-        {x:-2.5, y:0, z:-7},
-        {x:2.5, y:0, z:-7},
-      ];
-      const targetPositions = [
-        {x:0, y:0, z:-2},
-        {x:0, y:0, z:-2},
-        {x:0, y:0, z:-2},
-        {x:0, y:0, z:-2},
-        {x:0, y:0, z:-2},
-        {x:0, y:0, z:-2},
-      ];
+      let data = characterManager.getByName(name);
+      if (data) {
+        console.log("data", data);
 
+        if (changeCurrentFlag) {
+          characterManager.setCurrentName(name);
+        }
+        if (!data.visible) {
+          data.visible = true;
+          const n = characterManager.getVisibleCount();
+          const el = data.getElement();
 
-      for (let i=0;i<6;i++) {
-        let key = "key" + (i+1);
-        console.log("key "+ key);
+          console.log("n", n);
+          console.log("el", el);
 
-        let val = getParam(key);
-        console.log("val " + val);
-
-        if (val) {
-          const e = document.getElementById("id_" + val);
-          if (e) {
-            e.setAttribute("visible", true);
-            e.setAttribute("position", vectorToString(positions[i]));
-            e.setAttribute('rotate-around-circular-path', {radius: 1, speed: 1, targetPos0: positions[i], targetPos1: targetPositions[i]});
+          if (el) {
+            el.setAttribute("visible", true);
+            el.setAttribute("position", vectorToString(positions[n]));
+            el.setAttribute('rotate-around-circular-path', {speed: 1, targetPos0: positions[n], targetPos1: targetPositions[n]});
           }
         }
+        //
+        if (changeCurrentFlag) {
+          const el = data.getElement();
+          console.log("--- el", el);
+
+          if (el) {
+            var attr = el.getAttribute('rotate-around-circular-path');
+            console.log("--- attr", attr);
+            if (attr) {
+              attr.start = 1;
+              data.setAnimation('walk');
+            }
+          }
+        }
+        //
       }
+    }
+
+    function onCharacterButton(name) {
+      console.log(name);
+      addCharacter(name, true);
+    }
+
+    // 最初の準備
+    function initAR() {
+      for (let i=0;i<6;i++) {
+        let key = "key" + (i+1);
+        let name = getParam(key);
+        if (name) {
+          addCharacter(name, false);
+        }
+      }
+
+      setTimeout(()=> {
+        addCharacter(getParam("key1"), true);
+      },3000);
     }
 
     function isNearPos(pos1, pos2) {
       return pos1.x == pos2.x && pos1.y == pos2.y && pos1.z == pos2.z;
     }
 
+    AFRAME.registerComponent('rotate-around-circular-path', {
+      schema: {
+        speed: { type: 'number', default: 1 },
+        start: { type: 'number', default: 0 },
+        targetPos0: {default: {x:0, y:0, z:0}},
+        targetPos1: {default: {x:0, y:0, z:0}},
+      },
 
-    // AFRAME.registerComponent('marker', {
-    //   schema: {
-    //     baseTime: { type: 'number', default: 0},
-    //     modelEntity: { default: null},
-    //   },
+      init: function () {
+        this.direction = 1; // 進行方向
+      },
 
-    //   init: function () {
-    //     const thisMarker = this;
-    //     // const marker = this.el;
+      tick: function (time, timeDelta) {
+        const character = characterManager.getByID(this.el.id);
+        if (character && character.visible && this.data.start > 0) {
+          const currentFlag = characterManager.isCurrentName(character.name);
+          const pos = this.el.getAttribute('position');
+          var x = pos.x;
+          var y = pos.y;
+          var z = pos.z;
+          if (!currentFlag)
+            this.direction = -1;
+          const targetPos = this.direction==1 ? this.data.targetPos1 : this.data.targetPos0;
+          const d = this.data.speed * (timeDelta / 1000);
+          const actionFlag = currentFlag && actionStartTime + 1000 > Date.now();
 
-
-    //     // console.log("-------init baseTime ? " + this.el.getAttribute('marker').baseTime.toString());
-        
-
-    //     this.el.addEventListener('markerFound', function () {
-    //       console.log("-------markerFound-------");
-
-    //       thisMarker.data.baseTime = Date.now();
-    //       console.log("-------baseTime------- " + thisMarker.data.baseTime.toString());
-
-    //       // if (audio) {
-    //       //   audio.currentTime = 0;
-    //       //   audio.play();
-    //       // }
-    //     });
-
-    //     this.el.addEventListener('markerLost', function () {
-    //       console.log("-------markerLost-------");
-    //       console.dir(thisMarker);
-    //       console.log("-------");
-    //       // // audio && audio.pause();
-    //       if (thisMarker.data.modelEntity && thisMarker.data.modelEntity.components.sound.isPlaying) {
-    //         console.log("-------markerLost stopSound -------");
-    //         thisMarker.data.modelEntity.components.sound.stopSound();
-    //       }
-
-    //       thisMarker.data.baseTime = 0;
-    //     });
-    //   },
-    // });
-
-  // AFRAME.registerComponent('my_params', {
-  //   schema: {
-  //     baseTime: { type: 'number', default: 0 },
-  //   },
-  // });
-
-  AFRAME.registerComponent('rotate-around-circular-path', {
-    schema: {
-      radius: { type: 'number', default: 1 }, // 円の半径
-      speed: { type: 'number', default: 1 },  // 移動の速さ
-      // baseTime: { type: 'number', default: 0},
-      start: { type: 'number', default: 0 },  // start flag
-      targetPos0: {default: {x:0, y:0, z:0}},
-      targetPos1: {default: {x:0, y:0, z:0}},
-    },
-
-    init: function () {
-      // this.center = { x: 0, y: this.data.radius, z: 0 }; // 中心の座標
-      this.angle = (-2*Math.PI)/4; // 初期角度
-      // this.start = false;
-      this.direction = 1; // 進行方向
-    },
-
-    tick: function (time, timeDelta) {
-      console.log("-------tick-------");
-
-      // var t1 = new Date().getTime();      
-      // console.log("t1        " + t1.toString());
-      // console.log("timeDelta " + timeDelta.toString());
-      // if (this.time0)
-      //   console.log("time0     " + this.time0.toString());
-
-
-      if (this.data.start > 0) {
-        //console.log("-------tick------- start " + this.data.start.toString());
-        console.log("-------tick------- targetPos0 " , this.data.targetPos0);
-
-        const pos = this.el.getAttribute('position');
-        console.log("-------tick------- position" , pos);
-        var x = pos.x;
-        var y = pos.y;
-        var z = pos.z;
-
-        const targetPos = this.direction==1 ? this.data.targetPos1 : this.data.targetPos0;
-
-        const d = this.data.speed * (timeDelta / 1000);
-
-        if (Math.abs(targetPos.x - x) > d) {
-          if (targetPos.x > x)
-            x += d;
-          else
-            x -= d;
-        } else {
-          x = targetPos.x;
-        }
-        if (Math.abs(targetPos.y - y) > d) {
-          if (targetPos.y > y)
-            y += d;
-          else
-            y -= d;
-        } else {
-          y = targetPos.y;
-        }
-        if (Math.abs(targetPos.z - z) > d) {
-          if (targetPos.z > z)
-            z += d;
-          else
-            z -= d;
-        } else {
-          z = targetPos.z;
-        }
-
-        const newPos = { x: x, y: y, z: z };
-
-        this.el.setAttribute('position', newPos);
-
-        console.log("-------tick------- newPos" , newPos);
-
-        if (isNearPos(newPos, targetPos)) {
-          this.direction = this.direction==1 ? -1 : 1;
-        }
-        console.log("-------tick------- direction" , this.direction);
-      }
-
-      return;///test
-
-
-
-      var x = 0;
-      var y = 0;
-      var z = 0;
-      var flag = false;
-
-        // console.dir(this);
-        //if (this.el)        console.dir(this.el);
-        //if (this.el.parentElement)  console.dir(this.el.parentElement);
-        // if (this.el.parentElement.getAttribute('marker'))  console.dir(this.el.parentElement.getAttribute('marker'));
-
-      // if (this.data.start>0 &&
-      //     this.el.parentElement.getAttribute('marker') && 
-      //     this.el.parentElement.getAttribute('marker').baseTime) {
-
-        // var aaatmp = this.el.parentElement.getAttribute('marker');
-        // console.dir(aaatmp);
-        // return;
-
-      // if (this.el.parentElement.getAttribute('marker') && 
-      //     this.el.parentElement.getAttribute('marker').baseTime) {
-
-        //var baseTime = this.el.parentElement.getAttribute('marker').baseTime;
-        //if (baseTime > 0) {
-        if (this.data.start) {
-
-
-
-        // if (false) {
-          // this.el.parentElement.getAttribute('marker').modelEntity = this.el;
-          // console.dir(this.el.parentElement.getAttribute('marker').baseTime);           
-
-          // var dt = Date.now() - this.el.parentElement.getAttribute('marker').baseTime;
-
-          // console.log("dt     " + dt.toString());
-
-          // dt %= 60;
-          // this.angle += this.data.speed * dt; // 時間に基づいて角度を更新
-          // if (this.data.start > 0) {
-            this.angle += this.data.speed * (timeDelta / 1000); // 時間に基づいて角度を更新
-          // }
-
-          // 新しい位置を計算
-          // var x = this.center.x + this.data.radius * Math.cos(this.angle);
-          // var y = this.center.y + this.data.radius * Math.sin(this.angle);
-          // var z = this.center.z;
-
-          // x = this.center.x + this.data.radius * Math.cos(this.angle);
-          // y = this.center.y + this.data.radius * Math.sin(this.angle);
-          // z = this.center.z;
-
-          // エンティティの位置を更新
-          //this.el.setAttribute('position', { x: x, y: y, z: z });
-          flag = true;
-        }
-        // else {
-        //   this.angle = (-2*Math.PI)/4;
-        //   this.data.start = 0;
-        //   // this.el.position.x = this.el.position.y = this.el.position.z = 0;
-        //   //this.el.setAttribute('position', {x:0, y:0, z:0});
-
-        //   // x = this.center.x + this.data.radius * Math.cos(this.angle);
-        //   // y = this.center.y + this.data.radius * Math.sin(this.angle);
-        //   // z = this.center.z;
-
-        //   this.el.setAttribute('animation-mixer', 'clip:wave');
-        // }
-      //}
-      // else {
-      //   this.angle = (-2*Math.PI)/4;
-      //   this.data.start = 0;
-      //   //this.el.position.x = this.el.position.y = this.el.position.z = 0;
-      //   //this.el.setAttribute('position', {x:0, y:0, z:0});
-
-      //   // x = this.center.x + this.data.radius * Math.cos(this.angle);
-      //   //   y = this.center.y + this.data.radius * Math.sin(this.angle);
-      //   //   z = this.center.z;
-
-      //   this.el.setAttribute('animation-mixer', 'clip:wave');
-      // }
-      if (!flag) {
-        this.angle = (-2*Math.PI)/4;
-        // this.el.setAttribute('animation-mixer', 'clip:wave');
-//        this.data.start = 0;
-      }
-
-      x = this.data.center.x + this.data.radius * Math.cos(this.angle);
-      y = this.data.center.y + this.data.radius * Math.sin(this.angle);
-      z = this.data.center.z;
-
-      ///test
-      x = 0;
-      y = 0;
-      z = -7;
-      ///test
-
-    ///  this.el.setAttribute('position', { x: x, y: y, z: z });      
-    }
-  });
-
-    // window.onload = function(){
-    //   console.log("-------window.onload-------");
-
-    //   if (document.getElementById('tomashina'))
-    //     console.log("-------getElementById -> ok-------");
-
-    //   // 実行したい処理..
-    //   document.getElementById('tomashina').setAttribute('rotate-around-circular-path', {
-    //     radius: 5, // 任意の円の半径
-    //     speed: 1    // 任意の移動速度
-    //   });      
-    // }
-
-  AFRAME.registerComponent('click-change', {
-    init: function () {
-
-      var el1 = this.el;
-
-      this.el.addEventListener('click', function (event) {
-        //クリック時の処理
-        console.log("-------click!!-------");
-        // console.dir(el1);
-        // // this.parentEl.start = true;
-        // console.log("-------");
-        console.dir(this.parentEl);
-
-        var attr = this.parentEl.getAttribute('rotate-around-circular-path');
-        console.dir(attr);
-        if (attr) {
-          attr.start = attr.start ? 0 : 1;
-
-          console.log("==== start " + attr.start);
-          this.parentEl.setAttribute('animation-mixer', (attr.start ? 'clip:walk' : 'clip:wave'));
-
-          //this.parentEl.parentEl.getAttribute('marker').modelEntity = this.parentEl;
-          // attr.start = true;
-          // if (attr.start) {
-          //   attr.start = true;
-          // } else {
-          //   attr.start = true;
-          // }
-
-          //
-          if (this.parentEl.components.sound) {
-            if (!attr.start)
-            //if (this.parentEl.components.sound.isPlaying)
-              this.parentEl.components.sound.stopSound();
-            else
-              this.parentEl.components.sound.playSound();
+          if (currentFlag && actionFlag) {
+            //console.log("actionStartTime " + actionStartTime);
+            //console.log("actionFlag " + actionFlag);
           }
 
-          //
-          
+          if (actionFlag) {
+
+            if (actionStartTime + 1000 < Date.now()) {
+              //console.log("action - end");
+              actionStartTime = 0;
+              character.setAnimation('walk');
+
+            } else {
+              //console.log("action - start");
+              character.setAnimation('wave');
+
+            }
+          } else {
+            character.setAnimation('walk');
+
+            if (Math.abs(targetPos.x - x) > d) {
+              if (targetPos.x > x)
+                x += d;
+              else
+                x -= d;
+            } else {
+              x = targetPos.x;
+            }
+            if (Math.abs(targetPos.y - y) > d) {
+              if (targetPos.y > y)
+                y += d;
+              else
+                y -= d;
+            } else {
+              y = targetPos.y;
+            }
+            if (Math.abs(targetPos.z - z) > d) {
+              if (targetPos.z > z)
+                z += d;
+              else
+                z -= d;
+            } else {
+              z = targetPos.z;
+            }
+          }
+
+          const newPos = { x: x, y: y, z: z };
+
+          this.el.setAttribute('position', newPos);
+
+          if (currentFlag) {
+            if (isNearPos(newPos, targetPos)) {
+              this.direction = this.direction==1 ? -1 : 1;
+            }
+          } else {
+            if (isNearPos(newPos, this.data.targetPos0)) {
+              this.data.start = 0;
+              character.setAnimation('idle');
+            }
+          }
         }
 
-        // attr = this.parentEl.getAttribute('animation-mixer');
-        // this.parentEl.setAttribute('animation-mixer', 'clip:walk');
+        return;
+      }
+    });
 
-        // this.parentEl.setAttribute('rotate-around-circular-path', {start: true});
-        // this.parentEl.setAttribute('rotate-around-circular-path', {radius: 1, speed: 1});
-        // this.parentEl.setAttribute('time0', 1);
+    AFRAME.registerComponent('click-change', {
+      init: function () {
 
-      });
-    }
-  });   
+        var el1 = this.el;
 
+        this.el.addEventListener('click', function (event) {
+          console.log("-------click-------");
+          console.log("id " + this.parentEl.id);
+          console.dir(this.parentEl);
 
-  window.onload = function() {
-    showCharacters();
-  }  
+          const character = characterManager.getByID(this.parentEl.id);
+          if (character && characterManager.isCurrentName(character.name)) {
+            actionStartTime = Date.now();
+            character.playSound();
+          }
 
-  console.log("-------script--end-------");
+        });
+      }
+    });
 
+    window.onload = function() {
+      initAR();
+    }  
+
+    console.log("-------script--end-------");
   </script>
+  <style>
+    nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0px 0;
+      border: none;
+      outline: none;
+    }
+
+    nav ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      border: none;
+      outline: none;
+    }
+
+    nav ul li {
+      margin: 0 10px; /* リスト項目間のマージン */
+    }
+
+    nav ul li button {
+      background: none; /* ボタンのデフォルトスタイルをリセット */
+      border: none; /* ボーダーを消去 */
+      padding: 0; /* パディングをリセット */
+      cursor: pointer; /* カーソルをポインターに変更 */
+      border: none; /* ボーダーを消去 */
+      outline: none; /* アウトラインを消去 */
+    }
+
+    nav ul li button img {
+      max-width: 100%; /* 画像の最大幅を設定 */
+      height: auto; /* 画像の高さを自動調整 */
+      border: none; /* ボーダーを消去 */
+      outline: none; /* アウトラインを消去 */
+    }
+
+    /* スマートフォン向けのスタイル */
+    @media (max-width: 600px) {
+        nav ul li {
+            flex-basis: calc(30% - 10px);
+        }
+    }
+
+    /* スマートフォン向けスタイル */
+    @media (min-width: 600px) { /* 600pxは例です。実際のデザインに合わせて調整してください */
+        nav ul li {
+            flex-basis: calc(15% - 10px);
+        }
+
+      header, nav, footer {
+            background-color: transparent;
+        }
+    }
+
+    /* タブレット向けスタイル */
+    @media (min-width: 601px) and (max-width: 1024px) {
+      header, footer {
+        /* [disabled]background-color: lightblue; */
+      }
+    }
+
+    /* デスクトップ向けスタイル */
+    @media (min-width: 1025px) {
+      header, nav, main, footer {
+        margin-left: auto;
+        margin-right: auto;
+        width: 60%;
+        border: none; /* ボーダーを消去 */
+        outline: none; /* アウトラインを消去 */
+      }
+    }
+
+  </style>
 </head>
+<body style="margin: 0; overflow: hidden">
 
-  <!-- <div>
-    <body style="margin: 0; overflow: hidden">
-  </div> -->
-
-  <!-- <div> -->
-      <!-- <img src="./assets/logo.png" style="width: 20%; margin:5%; opacity:50%;"></img> -->
-
-    <!-- A-FrameにAR.jsを紐づけ、VRボタン非表示、深度バッファ追加 -->
-    <!-- このとき任意でvr-mode-ui="enabled: false;"も追加することで、ブラウザ起動時に右下に表示されるVRのボタンを非表示にできます。 -->
-    <!-- また、renderer="logarithmicDepthBuffer: true;"も追加して、対数深度バッファを設定します。深度バッファを設定しないと、3Dモデルの表示にノイズが走ったり、チカチカ明滅したりすることがあります。 -->
     <a-scene embedded arjs vr-mode-ui="enabled: false;" renderer="logarithmicDepthBuffer: true;">
-      <!-- 3Dモデルを読み込む -->
       <a-assets>
         <a-asset-item id="ena" src="./assets/ena_anim_1027.glb"></a-asset-item>
         <a-asset-item id="kenpachikun" src="./assets/kenpachikun_anim_1027.glb"></a-asset-item>
@@ -413,51 +463,73 @@
         <a-asset-item id="tomashina" src="./assets/tomashina_anim_1027.glb"></a-asset-item>
         <a-asset-item id="tostakun" src="./assets/tostakun_anim_1027.glb"></a-asset-item>
 
-        <audio id="audio_ena" src="./assets/ena.mp3" preload="auto"></audio>
-        <audio id="audio_kenpachikun" src="./assets/kenpachikun.mp3" preload="auto"></audio>
-        <audio id="audio_nonsuke" src="./assets/nonsuke.mp3" preload="auto"></audio>
-        <audio id="audio_okazaemon" src="./assets/okazaemon.mp3" preload="auto"></audio>
-        <audio id="audio_tomashina" src="./assets/tomashina.mp3" preload="auto"></audio>
-        <audio id="audio_tostakun" src="./assets/tostakun.mp3" preload="auto"></audio>
+        <audio id="audio_ena1" src="./assets/ena1.wav" preload="auto"></audio>
+        <audio id="audio_ena2" src="./assets/ena1.wav" preload="auto"></audio>
+        <audio id="audio_ena3" src="./assets/ena1.wav" preload="auto"></audio>
+        <audio id="audio_ena4" src="./assets/ena1.wav" preload="auto"></audio>
+        <audio id="audio_ena5" src="./assets/ena1.wav" preload="auto"></audio>
+
+        <audio id="audio_kenpachikun1" src="./assets/kenpachi1.wav" preload="auto"></audio>
+        <audio id="audio_kenpachikun2" src="./assets/kenpachi2.wav" preload="auto"></audio>
+        <audio id="audio_kenpachikun3" src="./assets/kenpachi3.wav" preload="auto"></audio>
+        <audio id="audio_kenpachikun4" src="./assets/kenpachi4.wav" preload="auto"></audio>
+        <audio id="audio_kenpachikun5" src="./assets/kenpachi5.wav" preload="auto"></audio>
+
+        <!-- TODO -->
+        <audio id="audio_nonsuke1" src="./assets/kenpachi1.wav" preload="auto"></audio>
+        <audio id="audio_nonsuke2" src="./assets/kenpachi2.wav" preload="auto"></audio>
+        <audio id="audio_nonsuke3" src="./assets/kenpachi3.wav" preload="auto"></audio>
+        <audio id="audio_nonsuke4" src="./assets/kenpachi4.wav" preload="auto"></audio>
+        <audio id="audio_nonsuke5" src="./assets/kenpachi5.wav" preload="auto"></audio>
+
+        <audio id="audio_okazaemon1" src="./assets/okazaemon1.wav" preload="auto"></audio>
+        <audio id="audio_okazaemon2" src="./assets/okazaemon2.wav" preload="auto"></audio>
+        <audio id="audio_okazaemon3" src="./assets/okazaemon3.wav" preload="auto"></audio>
+        <audio id="audio_okazaemon4" src="./assets/okazaemon4.wav" preload="auto"></audio>
+        <audio id="audio_okazaemon5" src="./assets/okazaemon5.wav" preload="auto"></audio>
+
+        <audio id="audio_tomashina1" src="./assets/tomashina1.wav" preload="auto"></audio>
+        <audio id="audio_tomashina2" src="./assets/tomashina2.wav" preload="auto"></audio>
+        <audio id="audio_tomashina3" src="./assets/tomashina3.wav" preload="auto"></audio>
+        <audio id="audio_tomashina4" src="./assets/tomashina4.wav" preload="auto"></audio>
+        <audio id="audio_tomashina5" src="./assets/tomashina5.wav" preload="auto"></audio>
+
+        <audio id="audio_tostakun1" src="./assets/tosta1.wav" preload="auto"></audio>
+        <audio id="audio_tostakun2" src="./assets/tosta2.wav" preload="auto"></audio>
+        <audio id="audio_tostakun3" src="./assets/tosta3.wav" preload="auto"></audio>
+        <audio id="audio_tostakun4" src="./assets/tosta4.wav" preload="auto"></audio>
+        <audio id="audio_tostakun5" src="./assets/tosta5.wav" preload="auto"></audio>
+
       </a-assets>
 
-
-      <!-- マウスカーソル -->
       <a-entity id="mouseCursor" cursor="rayOrigin: mouse" raycaster="objects: .raycastable"></a-entity>
 
-      <!-- マーカーの.pattファイルを読み込む  -->
-      <!-- <a-entity id="id_ena" visible="false"> -->
-      <!-- <a-marker marker type="pattern" url="./assets/pattern-ena.patt"> -->
-        <!-- 3Dモデルを呼び出す -->
-        <!-- position="0 0 -7"       -->
+      <!-- ena -->
+      <a-entity
+        id="id_ena"
+        gltf-model="#ena"
+        scale="0.5 0.5 0.5" rotation="0 0 0"
+        position="0 0 999999"
+        animation-mixer="clip:idle; timeScale:1"
+        sound="src: #audio_ena1; autoplay: false"
+        rotate-around-circular-path
+        visible="false"
+        >
         <a-entity
-          id="id_ena"
-          gltf-model="#ena"
-          scale="0.5 0.5 0.5" rotation="0 0 0"
-          position="0 0 999999"
-          animation-mixer="clip:wave; timeScale:1"
-          sound="src: #audio_ena; autoplay: false"
-          rotate-around-circular-path
-          visible="false"
-          >
+          scale="2 8 2"
+          position="0 2 0"
+          click-change>
           <a-entity
-            scale="2 8 2"
-            position="0 2 0"
-            click-change>
-            <a-entity
-              class="raycastable"
-              geometry="primitive:cylinder"
-              material="color:red; opacity: 0.5"
-              scale="1 1 1"
-              position="0 0 0"
-              visible="false"
-              >
-            </a-entity>
-          </a-entity>          
-        </a-entity>
-
-      <!-- </a-marker> -->
-      <!-- </a-entity> -->
+            class="raycastable"
+            geometry="primitive:cylinder"
+            material="color:red; opacity: 0.5"
+            scale="1 1 1"
+            position="0 0 0"
+            visible="false"
+            >
+          </a-entity>
+        </a-entity>          
+      </a-entity>
 
       <!-- kenpachikun -->
       <a-entity
@@ -465,8 +537,8 @@
         gltf-model="#kenpachikun"
         scale="0.5 0.5 0.5" rotation="0 0 0"
         position="0 0 999999"
-        animation-mixer="clip:wave; timeScale:1"
-        sound="src: #audio_kenpachikun; autoplay: false"
+        animation-mixer="clip:idle; timeScale:1"
+        sound="src: #audio_kenpachikun1; autoplay: false"
         rotate-around-circular-path
         visible="false"
         >
@@ -492,8 +564,8 @@
         gltf-model="#nonsuke"
         scale="0.5 0.5 0.5" rotation="0 0 0"
         position="0 0 999999"
-        animation-mixer="clip:wave; timeScale:1"
-        sound="src: #audio_nonsuke; autoplay: false"
+        animation-mixer="clip:idle; timeScale:1"
+        sound="src: #audio_nonsuke1; autoplay: false"
         rotate-around-circular-path
         visible="false"
         >
@@ -519,8 +591,8 @@
         gltf-model="#okazaemon"
         scale="0.5 0.5 0.5" rotation="0 0 0"
         position="0 0 999999"
-        animation-mixer="clip:wave; timeScale:1"
-        sound="src: #audio_okazaemon; autoplay: false"
+        animation-mixer="clip:idle; timeScale:1"
+        sound="src: #audio_okazaemon1; autoplay: false"
         rotate-around-circular-path
         visible="false"
         >
@@ -546,8 +618,8 @@
         gltf-model="#tomashina"
         scale="0.5 0.5 0.5" rotation="0 0 0"
         position="0 0 999999"
-        animation-mixer="clip:wave; timeScale:1"
-        sound="src: #audio_tomashina; autoplay: false"
+        animation-mixer="clip:idle; timeScale:1"
+        sound="src: #audio_tomashina1; autoplay: false"
         rotate-around-circular-path
         visible="false"
         >
@@ -573,8 +645,8 @@
         gltf-model="#tostakun"
         scale="0.5 0.5 0.5" rotation="0 0 0"
         position="0 0 999999"
-        animation-mixer="clip:wave; timeScale:1"
-        sound="src: #audio_tostakun; autoplay: false"
+        animation-mixer="clip:idle; timeScale:1"
+        sound="src: #audio_tostakun1; autoplay: false"
         rotate-around-circular-path
         visible="false"
         >
@@ -593,191 +665,21 @@
           </a-entity>
         </a-entity>          
       </a-entity>
-
-
-      <!-- <a-marker type="pattern" url="./assets/pattern-kenpachikun.patt">
-        <a-entity
-            gltf-model="#kenpachikun"
-            scale="0.5 0.5 0.5" rotation="-90 0 0"
-            animation-mixer="clip:walk; timeScale:4"
-            animation__1="property: position; from: 0 0 0; to: 0 5 0; loop: true; dur: 3000"
-            sound="src: #audio_kenpachikun"
-            >
-        </a-entity>
-      </a-marker> -->
-      <!-- <a-marker marker type="pattern" url="./assets/pattern-kenpachikun.patt">
-        <a-entity
-            gltf-model="#kenpachikun"
-            scale="0.5 0.5 0.5" rotation="-90 0 0"
-            animation-mixer="clip:wave; timeScale:1"
-            rotate-around-circular-path
-            sound="src: #audio_kenpachikun; autoplay: false"
-            >
-            <a-entity
-              scale="2 8 2"
-              position="0 2 0"
-              click-change>
-              <a-entity
-                class="raycastable"
-                geometry="primitive:cylinder"
-                material="color:red; opacity: 0.5"
-                scale="1 1 1"
-                position="0 0 0"
-                visible="false"
-                >
-              </a-entity>
-            </a-entity>          
-        </a-entity>
-      </a-marker>
-
-      <a-marker marker type="pattern" url="./assets/pattern-nonsuke.patt">
-        <a-entity
-            gltf-model="#nonsuke"
-            scale="0.5 0.5 0.5" rotation="-90 0 0"
-            animation-mixer="clip:wave; timeScale:1"
-            rotate-around-circular-path
-            sound="src: #audio_nonsuke; autoplay: false"
-            >
-            <a-entity
-              scale="2 8 2"
-              position="0 2 0"
-              click-change>
-              <a-entity
-                class="raycastable"
-                geometry="primitive:cylinder"
-                material="color:red; opacity: 0.5"
-                scale="1 1 1"
-                position="0 0 0"
-                visible="false"
-                >
-              </a-entity>
-            </a-entity>          
-        </a-entity>
-      </a-marker>
-
-      <a-marker marker type="pattern" url="./assets/pattern-okazaemon.patt">
-        <a-entity
-            gltf-model="#okazaemon"
-            scale="0.5 0.5 0.5" rotation="-90 0 0"
-            animation-mixer="clip:wave; timeScale:1"
-            rotate-around-circular-path
-            sound="src: #audio_okazaemon; autoplay: false"
-            >
-            <a-entity
-              scale="2 8 2"
-              position="0 2 0"
-              click-change>
-              <a-entity
-                class="raycastable"
-                geometry="primitive:cylinder"
-                material="color:red; opacity: 0.5"
-                scale="1 1 1"
-                position="0 0 0"
-                visible="false"
-                >
-              </a-entity>
-            </a-entity>          
-        </a-entity>
-      </a-marker>
-
-      <a-marker marker type="pattern" url="./assets/pattern-tomashina.patt">
-        <a-entity
-            gltf-model="#tomashina"
-            scale="0.5 0.5 0.5" rotation="-90 0 0"
-            animation-mixer="clip:wave; timeScale:1"
-            rotate-around-circular-path
-            sound="src: #audio_tomashina; autoplay: false"
-            >
-            <a-entity
-              scale="2 8 2"
-              position="0 2 0"
-              click-change>
-              <a-entity
-                class="raycastable"
-                geometry="primitive:cylinder"
-                material="color:red; opacity: 0.5"
-                scale="1 1 1"
-                position="0 0 0"
-                visible="false"
-                >
-              </a-entity>
-            </a-entity>          
-        </a-entity>
-      </a-marker> -->
-      <!-- <a-marker type="pattern" url="./assets/pattern-tomashina.patt">
-        <a-entity
-            gltf-model="#tomashina"
-            scale="0.5 0.5 0.5" rotation="-90 0 0"
-            animation-mixer="clip:wave; timeScale:1"
-            my_params
-            >
-            <a-entity position="0 0 0" click-change>
-              <a-entity
-                class="raycastable"
-                geometry="primitive:cylinder"
-                material="color:red; opacity: 0.5"
-                scale="1 2 1"
-                position="0 0.5 0"
-                visible="true"
-                >
-              </a-entity>
-            </a-entity>          
-        </a-entity>
-      </a-marker> -->
-
-      <!-- <a-marker type="pattern" url="./assets/pattern-tostakun.patt">
-        <a-entity
-            gltf-model="#tostakun"
-            scale="0.5 0.5 0.5" rotation="-90 0 0"
-            animation-mixer="clip:wave; timeScale:1"
-            rotate-around-circular-path
-            >
-        </a-entity>
-      </a-marker> -->
-      <!-- <a-marker marker type="pattern" url="./assets/pattern-tostakun.patt">
-        <a-entity
-            gltf-model="#tostakun"
-            scale="0.5 0.5 0.5" rotation="-90 0 0"
-            animation-mixer="clip:wave; timeScale:1"
-            rotate-around-circular-path
-            sound="src: #audio_tostakun; autoplay: false"
-            >
-            <a-entity
-              scale="2 8 2"
-              position="0 2 0"
-              click-change>
-              <a-entity
-                class="raycastable"
-                geometry="primitive:cylinder"
-                material="color:red; opacity: 0.5"
-                scale="1 1 1"
-                position="0 0 0"
-                visible="false"
-                >
-              </a-entity>
-            </a-entity>          
-        </a-entity>
-      </a-marker>
-  -->
-
-        <!-- raycaster="objects: .clickable" -->
-        <!-- rotate-around-circular-path -->
-
-      <!-- test -->
-      <!-- <a-sound id="my_sound01" src="#audio_nonsuke" position="0 1.2 -3" autoplay="false" loop="true"></a-sound> -->
-      <!-- test -->
-
-      <!-- カメラを追加 -->
-      <!-- <a-entity camera></a-entity> -->
-      <!-- <a-entity
-        camera
-        position="0 0 8"
-        >
-      </a-entity> -->
-      
     </a-scene>
-  <!-- </div> -->
 
-  <!-- <img src="./assets/logo.png" style="width: 20%; margin:5%; opacity:50%;"></img> -->
+    <div style="position: fixed; bottom: 10px; left: 40%;">
+      <nav>
+        <ul>
+          <li><button><img src="./image/f8_rally_character01.png" onclick="onCharacterButton('nonsuke')"></button></li>
+          <li><button><img src="./image/f8_rally_character02.png" onclick="onCharacterButton('tomashina')"></button></li>
+          <li><button><img src="./image/f8_rally_character03.png" onclick="onCharacterButton('kenpachikun')"></button></li>
+          <li><button><img src="./image/f8_rally_character04.png" onclick="onCharacterButton('okazaemon')"></button></li>
+          <li><button><img src="./image/f8_rally_character05.png" onclick="onCharacterButton('tostakun')"></button></li>
+          <li><button><img src="./image/f8_rally_character06.png" onclick="onCharacterButton('ena')"></button></li>
+          <li><button><img src="./assets/btn_back1_ble.png" onclick="location.href='./index.html'"></button></li>
+        </ul>
+      </nav>
+    </div>
+
 </body>
 </html>
