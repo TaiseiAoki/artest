@@ -1,7 +1,14 @@
+html, body {
+    height: 100%;
+    margin: 0;
+}
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
+    display: flex;
+    flex-direction: column; /* フレックスボックスの方向を縦に設定 */
+	min-height: 100vh; /* ビューポートの高さに基づく最小高さ */
     background-image: url('../image/forum8_ar_rally_1920_background.jpg'); /* 背景画像のパスを指定 */
     background-size: cover; /* 画像を画面に合わせて調整 */
     background-repeat: no-repeat; /* 画像の繰り返しを防止 */
@@ -9,7 +16,6 @@ body {
 	background-color: #343174; /* 背景画像がない部分の色を設定 */
 }
 	
-}
 
 header {
     padding: 10px;
@@ -70,6 +76,31 @@ nav ul li button img {
     outline: none; /* アウトラインを消去 */
 }
 
+main{
+	flex-grow: 1; /* main要素が利用可能なスペースを埋めるように伸縮 */
+
+	margin: 20; /* 余分な外側のマージンを取り除く */
+
+}
+
+footer {
+	width: 100%;	
+	background-color: #343174; /* フッターの背景色 */
+	color: white; /* フッターのテキスト色 */
+	text-align: center; /* テキストを中央揃え */
+	padding: 10px 0; /* 上下のパディング */
+}
+
+footer a {
+	color: white; /* リンクの色を白に */
+	text-decoration: none; /* 下線を消去 */
+}
+
+footer a:hover {
+	text-decoration: underline; /* ホバー時に下線を表示 */
+}
+
+
 /* スマートフォン向けのスタイル */
 @media (max-width: 600px) {
     nav ul li {
@@ -97,13 +128,12 @@ nav ul li button img {
 
 /* デスクトップ向けスタイル */
 @media (min-width: 1025px) {
-    header, nav, main, footer {
+    header, nav, main {
         margin-left: auto;
         margin-right: auto;
         width: 60%;
         border: none; /* ボーダーを消去 */
 		outline: none; /* アウトラインを消去 */
     }
-	
 	
 }
