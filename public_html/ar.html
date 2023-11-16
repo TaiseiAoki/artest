@@ -209,7 +209,7 @@
 
           if (el) {
             el.setAttribute("visible", true);
-            el.setAttribute("position", vectorToString(positions[n]));
+            el.setAttribute("position", vectorToString(positions[n-1]));
             el.setAttribute('rotate-around-circular-path', {speed: 1, targetPos0: positions[n], targetPos1: targetPositions[n]});
           }
         }
@@ -248,7 +248,7 @@
 
       setTimeout(()=> {
         addCharacter(getParam("key1"), true);
-      },3000);
+      },7000);//3000
     }
 
     function isNearPos(pos1, pos2) {
@@ -282,7 +282,7 @@
           // const targetPos = this.direction==1 ? this.data.targetPos1 : this.data.targetPos0;
           const d = this.data.speed * (timeDelta / 1000);
           const actionFlag = currentFlag && actionStartTime + 1000 > Date.now();
-          const moveType = 1;
+          const moveType = 0;
           let targetPos;
 
           if (this.direction==1) {
@@ -571,7 +571,7 @@
         scale="0.5 0.5 0.5" rotation="0 0 0"
         position="0 0 999999"
         animation-mixer="clip:idle; timeScale:1"
-        sound="src: #audio_kenpachikun1; autoplay: false; volume: 3"
+        sound="src: #audio_kenpachikun1; autoplay: false; volume: 3; maxDistance: 1"
         rotate-around-circular-path
         visible="false"
         >
@@ -598,7 +598,7 @@
         scale="0.5 0.5 0.5" rotation="0 0 0"
         position="0 0 999999"
         animation-mixer="clip:idle; timeScale:1"
-        sound="src: #audio_nonsuke1; autoplay: false; volume: 3"
+        sound="src: #audio_nonsuke1; autoplay: false; volume: 3; maxDistance: 1"
         rotate-around-circular-path
         visible="false"
         >
@@ -625,7 +625,7 @@
         scale="0.5 0.5 0.5" rotation="0 0 0"
         position="0 0 999999"
         animation-mixer="clip:idle; timeScale:1"
-        sound="src: #audio_okazaemon1; autoplay: false; volume: 3"
+        sound="src: #audio_okazaemon1; autoplay: false; volume: 3; maxDistance: 1"
         rotate-around-circular-path
         visible="false"
         >
@@ -652,7 +652,7 @@
         scale="0.5 0.5 0.5" rotation="0 0 0"
         position="0 0 999999"
         animation-mixer="clip:idle; timeScale:1"
-        sound="src: #audio_tomashina1; autoplay: false; volume: 3"
+        sound="src: #audio_tomashina1; autoplay: false; volume: 3; maxDistance: 1"
         rotate-around-circular-path
         visible="false"
         >
@@ -679,7 +679,7 @@
         scale="0.5 0.5 0.5" rotation="0 0 0"
         position="0 0 999999"
         animation-mixer="clip:idle; timeScale:1"
-        sound="src: #audio_tostakun1; autoplay: false; volume: 3"
+        sound="src: #audio_tostakun1; autoplay: false; volume: 3; maxDistance: 1"
         rotate-around-circular-path
         visible="false"
         >
