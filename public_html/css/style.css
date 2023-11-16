@@ -1,0 +1,109 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-image: url('../image/forum8_ar_rally_1920_background.jpg'); /* 背景画像のパスを指定 */
+    background-size: cover; /* 画像を画面に合わせて調整 */
+    background-repeat: no-repeat; /* 画像の繰り返しを防止 */
+    background-position: top; /* 画像を上部から表示 */
+	background-color: #343174; /* 背景画像がない部分の色を設定 */
+}
+	
+}
+
+header {
+    padding: 10px;
+    text-align: center;
+    background-color: transparent; /* ヘッダーの背景を透明に設定 */
+	border: none; /* ボーダーを消去 */
+    outline: none; /* アウトラインを消去 */
+}
+
+/* ロゴ画像のスタイル */
+#header-logo {
+    max-width: 100%;
+    height: auto;
+	border: none; /* ボーダーを消去 */
+    outline: none; /* アウトラインを消去 */
+}
+
+/* 基本スタイル */
+nav {
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 0;
+	border: none; /* ボーダーを消去 */
+    outline: none; /* アウトラインを消去 */
+
+}
+
+nav ul {
+     list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+	border: none; /* ボーダーを消去 */
+    outline: none; /* アウトラインを消去 */
+}
+
+nav ul li {
+    margin: 0 10px; /* リスト項目間のマージン */
+}
+
+nav ul li button {
+    background: none; /* ボタンのデフォルトスタイルをリセット */
+    border: none; /* ボーダーを消去 */
+    padding: 0; /* パディングをリセット */
+    cursor: pointer; /* カーソルをポインターに変更 */
+	border: none; /* ボーダーを消去 */
+    outline: none; /* アウトラインを消去 */
+}
+
+nav ul li button img {
+    max-width: 100%; /* 画像の最大幅を設定 */
+    height: auto; /* 画像の高さを自動調整 */
+	border: none; /* ボーダーを消去 */
+    outline: none; /* アウトラインを消去 */
+}
+
+/* スマートフォン向けのスタイル */
+@media (max-width: 600px) {
+    nav ul li {
+        flex-basis: calc(30% - 10px);
+    }
+}
+
+/* スマートフォン向けスタイル */
+@media (min-width: 600px) { /* 600pxは例です。実際のデザインに合わせて調整してください */
+    nav ul li {
+        flex-basis: calc(15% - 10px);
+
+	header, nav, footer {
+        background-color: transparent;
+    }
+}
+
+
+/* タブレット向けスタイル */
+@media (min-width: 601px) and (max-width: 1024px) {
+    header, footer {
+    /* [disabled]background-color: lightblue; */
+    }
+}
+
+/* デスクトップ向けスタイル */
+@media (min-width: 1025px) {
+    header, nav, main, footer {
+        margin-left: auto;
+        margin-right: auto;
+        width: 60%;
+        border: none; /* ボーダーを消去 */
+		outline: none; /* アウトラインを消去 */
+    }
+	
+	
+}
