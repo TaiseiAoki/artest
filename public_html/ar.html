@@ -28,6 +28,7 @@
         {x:0, y:0, z:-2},
         {x:0, y:0, z:-2},
         {x:0, y:0, z:-2},
+        {x:0, y:0, z:-2},
     ];
 
     let actionStartTime = 0;
@@ -210,7 +211,7 @@
           if (el) {
             el.setAttribute("visible", true);
             el.setAttribute("position", vectorToString(positions[n-1]));
-            el.setAttribute('rotate-around-circular-path', {speed: 1, targetPos0: positions[n], targetPos1: targetPositions[n]});
+            el.setAttribute('rotate-around-circular-path', {speed: 1, targetPos0: positions[n-1], targetPos1: targetPositions[n-1]});
           }
         }
         //
