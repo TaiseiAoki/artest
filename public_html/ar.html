@@ -33,6 +33,41 @@
 
     let actionStartTime = 0;
 
+
+    function calcRotateY(pos0, pos1) {
+
+    }
+
+    function takeSnapshot(video) {
+      var resizedCanvas = document.createElement("canvas");
+      var resizedContext = resizedCanvas.getContext("2d");
+      var width = video.videoWidth;
+      var height = video.videoHeight;
+      var aScene = document.querySelector("a-scene").components.screenshot.getCanvas("perspective");
+
+      if (width && height) {
+          //videoのサイズをキャンバスにセット
+          resizedCanvas.width = width;
+          resizedCanvas.height = height;
+          //キャンバスにvideoをコピー
+          resizedContext.drawImage(video, 0, 0, width, height);
+
+          //カメラの画角でar側の縮小処理を変える
+          if (width > height) {
+              // 横長（PC)
+              resizedContext.drawImage(aScene, 0, 0, width, height);
+          } else {
+              // 縦長（スマホ）
+              var scale = height / width;
+              var scaledWidth = height * scale;
+              var marginLeft = (width - scaledWidth) / 2;
+              resizedContext.drawImage(aScene, marginLeft, 0, scaledWidth, height);
+          }
+          return resizedCanvas.toDataURL('image/png');
+      }
+    }
+
+
     // CharacterData
     class CharacterData {
       name = "";
@@ -54,6 +89,28 @@
             }
             el.setAttribute('animation-mixer', 'clip:'+clip);
         }
+      }
+
+      // r "0 0 0"  [degree]
+      setRotation(r) {
+        if (r) {
+          const el = this.getElement();
+          if (el) {
+              el.setAttribute('rotation', r);
+          }
+        }
+      }
+
+      getRotation() {
+        const el = this.getElement();
+        if (el) {
+          var attr = el.getAttribute('rotation');
+          if (attr) {
+
+            return attr;
+          }
+        }
+        return null;
       }
 
       // ランダムに音声を鳴らす
@@ -395,11 +452,40 @@
           if (character && characterManager.isCurrentName(character.name)) {
             actionStartTime = Date.now();
             character.playSound();
+
+            ///test
+            // var ro = character.getRotation();
+            // console.log("rotation.y", ro.y);
+            // ro.y += 10;//平面上で回転する
+            // character.setRotation(ro);
+            ///test
+            ///test
           }
 
         });
       }
     });
+
+    function getFName() {
+      const dt = new Date(Date.now() + 3600000 * 9);
+      let datetime = dt.toISOString(); // 2021-10-11T21:00:23.653Z
+      datetime = datetime.replace('T', '_').replace(/\.\d{1,3}Z$/, '');
+      console.log(datetime);
+      return datetime + ".png";
+    }
+    
+    function onTakePhoto(obj) {
+      var video = document.querySelector('video');
+      var snap = takeSnapshot(video);              
+
+      let element = document.createElement('a');
+      element.href = snap;
+      element.download = getFName();
+      element.target = '_blank';
+      element.click();      
+
+      console.log('onTakePhoto - success!');
+    }
 
     window.onload = function() {
       initAR();
@@ -702,15 +788,17 @@
     </a-scene>
 
     <div style="position: fixed; bottom: 10px; left: 40%;">
+      <img id="snap">      
       <nav>
         <ul>
-          <li><button><img src="./image/f8_rally_character01.png" onclick="onCharacterButton('nonsuke')"></button></li>
-          <li><button><img src="./image/f8_rally_character02.png" onclick="onCharacterButton('tomashina')"></button></li>
-          <li><button><img src="./image/f8_rally_character03.png" onclick="onCharacterButton('kenpachikun')"></button></li>
-          <li><button><img src="./image/f8_rally_character04.png" onclick="onCharacterButton('okazaemon')"></button></li>
-          <li><button><img src="./image/f8_rally_character05.png" onclick="onCharacterButton('tostakun')"></button></li>
-          <li><button><img src="./image/f8_rally_character06.png" onclick="onCharacterButton('ena')"></button></li>
-          <li><button><img src="./assets/btn_back1_ble.png" onclick="location.href='./index.html'"></button></li>
+          <li><button onclick="onCharacterButton('nonsuke')"><img src="./image/f8_rally_character01.png" /></button></li>
+          <li><button onclick="onCharacterButton('tomashina')"><img src="./image/f8_rally_character02.png" /></button></li>
+          <li><button onclick="onCharacterButton('kenpachikun')"><img src="./image/f8_rally_character03.png" /></button></li>
+          <li><button onclick="onCharacterButton('okazaemon')"><img src="./image/f8_rally_character04.png" /></button></li>
+          <li><button onclick="onCharacterButton('tostakun')"><img src="./image/f8_rally_character05.png" /></button></li>
+          <li><button onclick="onCharacterButton('ena')"><img src="./image/f8_rally_character06.png" /></button></li>
+          <li><button onclick="location.href='./index.html'"><img src="./assets/btn_back1_ble.png" /></button></li>
+          <li><button onclick="onTakePhoto(this)"><img src="./assets/btn_back1_ble.png" /></button></li>
         </ul>
       </nav>
     </div>
