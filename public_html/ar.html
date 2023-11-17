@@ -19,6 +19,8 @@
         {x:1.5, y:0, z:-7},
         {x:-2.5, y:0, z:-7},
         {x:2.5, y:0, z:-7},
+        {x:-3.5, y:0, z:-7},
+        {x:3.5, y:0, z:-7},
     ];
 
     const targetPositions = [
@@ -29,13 +31,54 @@
         {x:0, y:0, z:-2},
         {x:0, y:0, z:-2},
         {x:0, y:0, z:-2},
+        {x:0, y:0, z:-2},
     ];
 
+    let initialWaitFlag = true;
     let actionStartTime = 0;
 
+    function degreeToRadian(deg) {
+      return Math.PI * deg / 180;
+    }
 
-    function calcRotateY(pos0, pos1) {
+    function radianToDegree(rad) {
+      return 180 * rad / Math.PI;
+    }
 
+    // 目標位置までのxz平面度を計算 [degree]
+    function calcRotateY(currentPos, targetPos) {
+      let dx = targetPos.x - currentPos.x;
+      let dz = targetPos.z - currentPos.z;
+      const angle = Math.atan2(dz, dx);
+      return radianToDegree(angle);
+    }
+
+    function calcNewPos(currentPos, targetPos, rotation, d) {
+      let x = currentPos.x;
+      let y = currentPos.y;
+      let z = currentPos.z;
+
+      const a =  degreeToRadian(rotation.y);
+      x += d * Math.cos(a);
+      //y += d * Math.sin(a);
+      z += d * Math.sin(a);
+
+      return {x:x, y:y, z:z};
+    }
+
+    function calcNewRotation(currentPos, targetPos, rotation, d) {
+      let ry = rotation.y;
+      let deg = calcRotateY(currentPos, targetPos);
+      if (ry < deg) {
+        ry += d*78;
+        if (ry > deg)
+          ry = deg;
+      } else {
+        ry -= d*78;
+        if (ry < deg)
+          ry = deg;
+      }
+      return {x:rotation.x, y:ry, z:rotation.z};
     }
 
     function takeSnapshot(video) {
@@ -46,18 +89,15 @@
       var aScene = document.querySelector("a-scene").components.screenshot.getCanvas("perspective");
 
       if (width && height) {
-          //videoのサイズをキャンバスにセット
           resizedCanvas.width = width;
           resizedCanvas.height = height;
-          //キャンバスにvideoをコピー
           resizedContext.drawImage(video, 0, 0, width, height);
 
-          //カメラの画角でar側の縮小処理を変える
           if (width > height) {
-              // 横長（PC)
+              // 横長
               resizedContext.drawImage(aScene, 0, 0, width, height);
           } else {
-              // 縦長（スマホ）
+              // 縦長
               var scale = height / width;
               var scaledWidth = height * scale;
               var marginLeft = (width - scaledWidth) / 2;
@@ -66,7 +106,6 @@
           return resizedCanvas.toDataURL('image/png');
       }
     }
-
 
     // CharacterData
     class CharacterData {
@@ -306,7 +345,8 @@
 
       setTimeout(()=> {
         addCharacter(getParam("key1"), true);
-      },7000);//3000
+        initialWaitFlag = false;
+      },7000);
     }
 
     function isNearPos(pos1, pos2) {
@@ -328,6 +368,9 @@
       },
 
       tick: function (time, timeDelta) {
+        if (initialWaitFlag)
+          return;
+
         const character = characterManager.getByID(this.el.id);
         if (character && character.visible && this.data.start > 0) {
           const currentFlag = characterManager.isCurrentName(character.name);
@@ -340,15 +383,20 @@
           // const targetPos = this.direction==1 ? this.data.targetPos1 : this.data.targetPos0;
           const d = this.data.speed * (timeDelta / 1000);
           const actionFlag = currentFlag && actionStartTime + 1000 > Date.now();
-          const moveType = 0;
-          let targetPos;
+          let moveType = 0;
+          let targetPos = this.data.targetPos0;
+
+          if (currentFlag) {
+            moveType = 2;
+            this.direction = 1;
+          }
 
           if (this.direction==1) {
             if (moveType==0) {
               // 指定位置と元の位置の往復
-              targetPos = this.targetPos1;
+              targetPos = this.data.targetPos1;
 
-            } else {
+            } else if (moveType==1) {
               // ずっと直線的に左に移動
               if (this.targetUpdateTime + 1000 < Date.now()) {
                 this.targetPos2 = {
@@ -359,58 +407,117 @@
                 this.targetUpdateTime = Date.now();
               }
               targetPos = this.targetPos2;
+            } else if (moveType==2) {
+              if (this.targetUpdateTime + 2000 < Date.now()) {
+                // this.targetPos2 = {
+                //   x: this.data.targetPos0.x + Math.random()*5 - 3,
+                //   y: y,
+                //   z: this.data.targetPos0.y + Math.random()*5 - 3,
+                // }
+                this.targetPos2 = {
+                  x: this.data.targetPos0.x + Math.random()*2 - 1,
+                  y: y,
+                  z: this.data.targetPos0.z + Math.random()*1 + 3,
+                }
+                this.targetUpdateTime = Date.now();
+              }
+              targetPos = this.targetPos2;
             }
-
-            targetPos = this.targetPos2;
 
           } else {
             // もとに戻る
             targetPos = this.data.targetPos0;
           }
 
-          if (currentFlag && actionFlag) {
-            //console.log("actionStartTime " + actionStartTime);
-            //console.log("actionFlag " + actionFlag);
-          }
-
           if (actionFlag) {
 
-            if (actionStartTime + 1000 < Date.now()) {
-              //console.log("action - end");
-              actionStartTime = 0;
+            if (actionStartTime + 2000 < Date.now()) {
               character.setAnimation('walk');
 
+              if (y < this.data.targetPos0.y)
+                y = this.data.targetPos0.y;
+              actionStartTime = 0;
+
             } else {
-              //console.log("action - start");
               character.setAnimation('wave');
 
+              const a = -9.8 / 1000000.0;
+              const t = Date.now() - actionStartTime;
+              const v0 = 3000 / 1000000.0;
+              y = a * t*t / 2.0 + v0 * t;
+              if (y < this.data.targetPos0.y)
+                y = this.data.targetPos0.y;
+
+              character.setRotation({x:0, y:0, z:0});
             }
           } else {
             character.setAnimation('walk');
 
-            if (Math.abs(targetPos.x - x) > d) {
-              if (targetPos.x > x)
-                x += d;
-              else
-                x -= d;
-            } else {
-              x = targetPos.x;
-            }
-            if (Math.abs(targetPos.y - y) > d) {
-              if (targetPos.y > y)
-                y += d;
-              else
-                y -= d;
-            } else {
-              y = targetPos.y;
-            }
-            if (Math.abs(targetPos.z - z) > d) {
-              if (targetPos.z > z)
-                z += d;
-              else
-                z -= d;
-            } else {
-              z = targetPos.z;
+            if (moveType==0) {
+              if (Math.abs(targetPos.x - x) > d) {
+                if (targetPos.x > x)
+                  x += d;
+                else
+                  x -= d;
+              } else {
+                x = targetPos.x;
+              }
+              if (Math.abs(targetPos.y - y) > d) {
+                if (targetPos.y > y)
+                  y += d;
+                else
+                  y -= d;
+              } else {
+                y = targetPos.y;
+              }
+              if (Math.abs(targetPos.z - z) > d) {
+                if (targetPos.z > z)
+                  z += d;
+                else
+                  z -= d;
+              } else {
+                z = targetPos.z;
+              }
+
+              character.setRotation({x:0, y:0, z:0});
+
+            } else if (moveType==2) {
+              // let r0 = character.getRotation();
+              // let r1 = calcNewRotation(pos, targetPos, r0, d);
+              // let pos1 = calcNewPos(pos, targetPos, r1, d);
+              // x = pos1.x;
+              // y = pos1.y;
+              // z = pos1.z;
+
+              if (Math.abs(targetPos.x - x) > d) {
+                if (targetPos.x > x)
+                  x += d;
+                else
+                  x -= d;
+              } else {
+                x = targetPos.x;
+              }
+              if (Math.abs(targetPos.y - y) > d) {
+                if (targetPos.y > y)
+                  y += d;
+                else
+                  y -= d;
+              } else {
+                y = targetPos.y;
+              }
+              if (Math.abs(targetPos.z - z) > d) {
+                if (targetPos.z > z)
+                  z += d;
+                else
+                  z -= d;
+              } else {
+                z = targetPos.z;
+              }
+
+              let r0 = character.getRotation();
+              let r1 = calcNewRotation(pos, targetPos, r0, d);
+
+              character.setRotation(r1);
             }
           }
 
@@ -424,7 +531,9 @@
                 this.direction = this.direction==1 ? -1 : 1;
               }
             } else if (moveType==1) {
-              // ずっと直線的に左に移動
+              //
+            } else if (moveType==1) {
+              //
             }
           } else {
             if (isNearPos(newPos, this.data.targetPos0)) {
@@ -440,9 +549,6 @@
 
     AFRAME.registerComponent('click-change', {
       init: function () {
-
-        var el1 = this.el;
-
         this.el.addEventListener('click', function (event) {
           console.log("-------click-------");
           console.log("id " + this.parentEl.id);
@@ -452,16 +558,7 @@
           if (character && characterManager.isCurrentName(character.name)) {
             actionStartTime = Date.now();
             character.playSound();
-
-            ///test
-            // var ro = character.getRotation();
-            // console.log("rotation.y", ro.y);
-            // ro.y += 10;//平面上で回転する
-            // character.setRotation(ro);
-            ///test
-            ///test
           }
-
         });
       }
     });
@@ -546,22 +643,17 @@
         nav ul li {
             flex-basis: calc(15% - 10px);
         }
-
-      header, nav, footer {
-            background-color: transparent;
-        }
     }
 
     /* タブレット向けスタイル */
     @media (min-width: 601px) and (max-width: 1024px) {
-      header, footer {
-        /* [disabled]background-color: lightblue; */
-      }
+
     }
 
     /* デスクトップ向けスタイル */
     @media (min-width: 1025px) {
-      header, nav, main, footer {
+      /* header, nav, main, footer { */
+        header, nav {
         margin-left: auto;
         margin-right: auto;
         width: 60%;
@@ -798,7 +890,7 @@
           <li><button onclick="onCharacterButton('tostakun')"><img src="./image/f8_rally_character05.png" /></button></li>
           <li><button onclick="onCharacterButton('ena')"><img src="./image/f8_rally_character06.png" /></button></li>
           <li><button onclick="location.href='./index.html'"><img src="./assets/btn_back1_ble.png" /></button></li>
-          <li><button onclick="onTakePhoto(this)"><img src="./assets/btn_back1_ble.png" /></button></li>
+          <!-- <li><button onclick="onTakePhoto(this)"><img src="./assets/btn_back1_ble.png" /></button></li> -->
         </ul>
       </nav>
     </div>
