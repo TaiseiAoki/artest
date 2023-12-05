@@ -36,6 +36,7 @@
 
     let initialWaitFlag = true;
     let actionStartTime = 0;
+    let takePhotoMode = false;
 
     function degreeToRadian(deg) {
       return Math.PI * deg / 180;
@@ -120,13 +121,20 @@
       setAnimation(clip) {
         const el = this.getElement();
         if (el) {
-            var attr = el.getAttribute('animation-mixer');
-            if (attr) {
-              if (attr.clip && attr.clip==clip) {
-                return;
-              }
+          var attr = el.getAttribute('animation-mixer');
+          if (attr) {
+            if (attr.clip && attr.clip==clip) {
+              return;
             }
-            el.setAttribute('animation-mixer', 'clip:'+clip);
+          }
+          el.setAttribute('animation-mixer', 'clip:'+clip);
+        }
+      }
+
+      pauseAnimation(fPause) {
+        const el = this.getElement();
+        if (el) {
+          el.setAttribute('animation-mixer', 'timeScale:'+(fPause?'0':'1'));
         }
       }
 
@@ -328,6 +336,15 @@
       }
     }
 
+    function pauseAnimation(fPause) {
+      for(let i=0;i<characterManager.length();i++) {
+        const data = characterManager.get(i);
+        if (!data)
+          continue;
+          data.pauseAnimation(fPause);
+      }
+    }
+
     function onCharacterButton(name) {
       console.log(name);
       addCharacter(name, true);
@@ -370,6 +387,8 @@
       tick: function (time, timeDelta) {
         if (initialWaitFlag)
           return;
+        if (takePhotoMode)
+          return;
 
         const character = characterManager.getByID(this.el.id);
         if (character && character.visible && this.data.start > 0) {
@@ -380,7 +399,6 @@
           var z = pos.z;
           if (!currentFlag)
             this.direction = -1;
-          // const targetPos = this.direction==1 ? this.data.targetPos1 : this.data.targetPos0;
           const d = this.data.speed * (timeDelta / 1000);
           const actionFlag = currentFlag && actionStartTime + 1000 > Date.now();
           let moveType = 0;
@@ -409,11 +427,6 @@
               targetPos = this.targetPos2;
             } else if (moveType==2) {
               if (this.targetUpdateTime + 2000 < Date.now()) {
-                // this.targetPos2 = {
-                //   x: this.data.targetPos0.x + Math.random()*5 - 3,
-                //   y: y,
-                //   z: this.data.targetPos0.y + Math.random()*5 - 3,
-                // }
                 this.targetPos2 = {
                   x: this.data.targetPos0.x + Math.random()*2 - 1,
                   y: y,
@@ -482,13 +495,6 @@
               character.setRotation({x:0, y:0, z:0});
 
             } else if (moveType==2) {
-              // let r0 = character.getRotation();
-              // let r1 = calcNewRotation(pos, targetPos, r0, d);
-              // let pos1 = calcNewPos(pos, targetPos, r1, d);
-              // x = pos1.x;
-              // y = pos1.y;
-              // z = pos1.z;
-
               if (Math.abs(targetPos.x - x) > d) {
                 if (targetPos.x > x)
                   x += d;
@@ -570,8 +576,28 @@
       console.log(datetime);
       return datetime + ".png";
     }
-    
+
+    function onEnableTakePhotoMode(obj) {
+      console.log('onEnableTakePhotoMode  ' + takePhotoMode);
+
+      takePhotoMode = !takePhotoMode;
+
+      pauseAnimation(takePhotoMode);
+
+      const base_buttons = document.getElementById("base_buttons");
+      const base_takephoto = document.getElementById("base_takephoto");
+
+      if (base_buttons) {
+        base_buttons.style.display = takePhotoMode ? "none" : "block";
+      }
+      if (base_takephoto) {
+        base_takephoto.style.display = takePhotoMode ? "block" : "none";
+      }
+    }
+
     function onTakePhoto(obj) {
+      console.log('onTakePhoto');
+
       var video = document.querySelector('video');
       var snap = takeSnapshot(video);              
 
@@ -582,6 +608,11 @@
       element.click();      
 
       console.log('onTakePhoto - success!');
+
+      setTimeout(()=> {
+        onEnableTakePhotoMode();
+
+      },3000);
     }
 
     window.onload = function() {
@@ -879,8 +910,8 @@
       </a-entity>
     </a-scene>
 
-    <div style="position: fixed; bottom: 10px; left: 40%;">
-      <img id="snap">      
+    <div id="base_buttons" style="position: fixed; bottom: 10px; left: 40%;">
+      <!-- <img id="snap">       -->
       <nav>
         <ul>
           <li><button onclick="onCharacterButton('nonsuke')"><img src="./image/f8_rally_character01.png" /></button></li>
@@ -890,9 +921,14 @@
           <li><button onclick="onCharacterButton('tostakun')"><img src="./image/f8_rally_character05.png" /></button></li>
           <li><button onclick="onCharacterButton('ena')"><img src="./image/f8_rally_character06.png" /></button></li>
           <li><button onclick="location.href='./index.html'"><img src="./assets/btn_back1_ble.png" /></button></li>
-          <!-- <li><button onclick="onTakePhoto(this)"><img src="./assets/btn_back1_ble.png" /></button></li> -->
+          <li><button onclick="onEnableTakePhotoMode(this)"><img src="./assets/btn_takemode.png" /></button></li>
         </ul>
       </nav>
+    </div>
+    <div id="base_takephoto" onclick="onTakePhoto(this)" style="position: fixed; top: 10px; bottom: 10px; left: 10px; right: 10px; display:none;">
+      <div style="position: fixed; top:10%; left:10%;">
+        画面をタップすると写真撮影できます
+      </div>
     </div>
 
 </body>
